@@ -501,7 +501,7 @@ func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 			token, err = mw.jwtFromCookie(c, parts[1])
 		}
 
-		if err != nil {
+		if err == nil {
 			break
 		}
 	}
