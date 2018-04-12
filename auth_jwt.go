@@ -69,7 +69,7 @@ type GinJWTMiddleware struct {
 	// - "header:<name>"
 	// - "query:<name>"
 	// - "cookie:<name>"
-	TokenLookup string
+	TokenLookup []string
 
 	// TokenHeadName is a string in the header. Default value is "Bearer"
 	TokenHeadName string
@@ -202,8 +202,8 @@ func (mw *GinJWTMiddleware) usingPublicKeyAlgo() bool {
 // MiddlewareInit initialize jwt configs.
 func (mw *GinJWTMiddleware) MiddlewareInit() error {
 
-	if mw.TokenLookup == "" {
-		mw.TokenLookup = "header:Authorization"
+	if len(mw.TokenLookup) == 0 {
+		mw.TokenLookup = []string{"header:Authorization"}
 	}
 
 	if mw.SigningAlgorithm == "" {
@@ -489,14 +489,21 @@ func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	var token string
 	var err error
 
-	parts := strings.Split(mw.TokenLookup, ":")
-	switch parts[0] {
-	case "header":
-		token, err = mw.jwtFromHeader(c, parts[1])
-	case "query":
-		token, err = mw.jwtFromQuery(c, parts[1])
-	case "cookie":
-		token, err = mw.jwtFromCookie(c, parts[1])
+	for _, lookup := range mw.TokenLookup {
+
+		parts := strings.Split(lookup, ":")
+		switch parts[0] {
+		case "header":
+			token, err = mw.jwtFromHeader(c, parts[1])
+		case "query":
+			token, err = mw.jwtFromQuery(c, parts[1])
+		case "cookie":
+			token, err = mw.jwtFromCookie(c, parts[1])
+		}
+
+		if err != nil {
+			break
+		}
 	}
 
 	if err != nil {
